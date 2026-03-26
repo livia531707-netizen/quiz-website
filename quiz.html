@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>職涯志向大測驗 - 找出你的命定工作</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #e67e22;
+            --secondary-color: #3498db;
+            --bg-color: #f8f9fa;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        #quiz-container {
+            background-color: var(--white);
+            max-width: 650px;
+            margin: 0 auto;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: var(--primary-color); font-size: 1.5rem; margin-bottom: 10px; }
+
+        .progress-container { margin-bottom: 30px; }
+        .progress-bar { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; }
+        #progress-fill { height: 100%; background: var(--secondary-color); width: 0%; transition: 0.3s; }
+        #progress-text { font-size: 0.8rem; color: #888; margin-top: 5px; text-align: right; }
+
+        .question-box h2 { font-size: 1.25rem; line-height: 1.6; margin-bottom: 30px; min-height: 60px; }
+
+        .options { display: grid; gap: 12px; }
+        .option-btn {
+            padding: 16px;
+            border: 2px solid #edf2f7;
+            background: #fff;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+            text-align: center;
+            font-weight: 500;
+        }
+        .option-btn:hover { border-color: var(--secondary-color); background: #f0f7ff; color: var(--secondary-color); }
+
+        #result-section, #form-section { display: none; }
+
+        .result-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        .result-card::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 6px;
+            background: var(--accent-color);
+        }
+        .rank-badge {
+            display: inline-block;
+            background: var(--accent-color);
+            color: white;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+        }
+        .result-card h3 { margin: 0 0 10px 0; color: var(--primary-color); }
+        .result-card p { font-size: 0.95rem; color: #555; line-height: 1.5; margin: 0; }
+
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .cta-btn {
+            background: var(--secondary-color);
+            color: white;
+            padding: 18px;
+            border: none;
+            width: 100%;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .cta-btn:hover { filter: brightness(1.1); }
+        .footer-note { font-size: 0.8rem; color: #999; margin-top: 15px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div id="quiz-container">
+    <div id="quiz-section">
+        <div class="header">
+            <h1>職涯志向測驗</h1>
+        </div>
+        <div class="progress-container">
+            <div class="progress-bar"><div id="progress-fill"></div></div>
+            <div id="progress-text">問題 1 / 50</div>
+        </div>
+        <div class="question-box">
+            <h2 id="question-text">載入中...</h2>
+            <div class="options">
+                <button class="option-btn" onclick="handleAnswer(5)">非常符合</button>
+                <button class="option-btn" onclick="handleAnswer(4)">符合</button>
+                <button class="option-btn" onclick="handleAnswer(3)">普通</button>
+                <button class="option-btn" onclick="handleAnswer(2)">不符合</button>
+                <button class="option-btn" onclick="handleAnswer(1)">非常不符合</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="result-section">
+        <div class="header">
+            <h1>測驗完成！</h1>
+            <p>分析您的性格特質後，最適合您的工作前三名為：</p>
+        </div>
+        <div id="recommendations"></div>
+        <button class="cta-btn" onclick="showForm()">查看詳細考情與下載教材</button>
+    </div>
+
+    <div id="form-section">
+        <div class="header">
+            <h1 id="form-title">領取專屬分析報告</h1>
+            <p id="form-subtitle">請留下您的聯絡資訊，我們將提供詳細類科介紹與歷屆考古題。</p>
+        </div>
+        
+        <form id="leadForm">
+            <div class="form-group">
+                <label>姓名</label>
+                <input type="text" id="name" required placeholder="請輸入姓名">
+            </div>
+            <div class="form-group">
+                <label>手機號碼</label>
+                <input type="tel" id="phone" required pattern="09[0-9]{8}" placeholder="例如：0912345678">
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="email" required placeholder="請輸入您的電子郵件">
+            </div>
+            <button type="submit" class="cta-btn">立即領取 ✅</button>
+        </form>
+
+        <div id="success-message" style="display: none; text-align: center;">
+            <h3 style="color: var(--accent-color); margin-bottom: 25px;">感謝填寫資料，請點擊下方連結獲取所需資源：</h3>
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <a href="https://www.3people.com.tw/" target="_blank" class="option-btn" style="text-decoration: none; color: var(--primary-color);">📘 考試資訊專區</a>
+                <a href="https://lihi2.com/042r5/quiz" target="_blank" class="option-btn" style="text-decoration: none; color: var(--primary-color);">📝 考古題下載專區</a>
+                <a href="https://lihi2.com/mYrSe/quiz" target="_blank" class="option-btn" style="text-decoration: none; color: var(--primary-color);">🎥 課程試閱專區</a>
+            </div>
+        </div>
+
+        <div class="footer-note" id="form-footer">
+            您的個人資料僅供本次測驗結果發送與相關考情諮詢使用。
+        </div>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        { text: "我喜歡規律的工作節奏，並重視工作的穩定性與保障。", cats: ['A'] },
+        { text: "我具備強烈的正義感，並希望能為社會治安盡一份力。", cats: ['P'] },
+        { text: "我對於修理機械、操作電力設備或工程建設有濃厚興趣。", cats: ['T'] },
+        { text: "我善於觀察人的需求，並能提供專業的心理或生活輔導。", cats: ['S'] },
+        { text: "我對法律條文有高度理解力，並喜歡從事邏輯思辨的工作。", cats: ['P'] },
+        { text: "我喜歡參與文化藝術活動的推廣與策劃。", cats: ['Art'] },
+        { text: "我對於數字、帳務處理與財務分析非常細心。", cats: ['F'] },
+        { text: "我具備業務開發的熱忱，願意挑戰高薪與績效。", cats: ['M'] },
+        { text: "我希望能有一技之長，並以此取得專業國家證照。", cats: ['L'] },
+        { text: "我能接受輪班制工作，且具備應對突發狀況的冷靜心態。", cats: ['P', 'T'] },
+        { text: "我喜歡處理文書資料、收發公文等行政管理業務。", cats: ['A'] },
+        { text: "我對國際匯率、銀行存匯業務與理財投資有興趣。", cats: ['F'] },
+        { text: "我希望能推動地方民生建設或發放社會救助金。", cats: ['S'] },
+        { text: "我願意在第一線為民眾服務，解決他們的各項申辦問題。", cats: ['A', 'S'] },
+        { text: "我具備體力勞動的心理準備，且不排斥戶外現場工作。", cats: ['T'] },
+        { text: "我喜歡用文字或社群媒體進行議題推廣與溝通。", cats: ['Art', 'M'] },
+        { text: "我對於土地開發、不動產買賣及估價有高度興趣。", cats: ['L'] },
+        { text: "我能耐心處理重複性高但需要精準度的工作。", cats: ['A', 'F'] },
+        { text: "我對資訊系統開發、網路安全或大數據分析感興趣。", cats: ['T'] },
+        { text: "我喜歡帶團出國旅遊，並解決旅途中的疑難雜症。", cats: ['M'] },
+        { text: "我對於入出國管制與移民政策的執行感到有興趣。", cats: ['S'] },
+        { text: "我能在法院或監所等環境中維持秩序與法律執行。", cats: ['P'] },
+        { text: "我希望能協助弱勢群體，並與政府部門溝通資源。", cats: ['S'] },
+        { text: "我喜歡研究商業法律，並為企業提供諮詢服務。", cats: ['P'] },
+        { text: "我具備操作複雜儀器或電氣設備的耐心與技術。", cats: ['T'] },
+        { text: "我對統計分析與建立預測模型有濃厚興趣。", cats: ['F'] },
+        { text: "我重視職場公平，願意擔任政風或法律監察工作。", cats: ['P'] },
+        { text: "我喜歡規劃大型展覽活動，並監督執行細節。", cats: ['Art'] },
+        { text: "我能適應在不同地區（如偏遠山區或離島）工作。", cats: ['T'] },
+        { text: "我善於協調人與人之間的糾紛，並提供建設性方案。", cats: ['S'] },
+        { text: "我希望能進入國營體系，獲得比私人企業更優渥的福利。", cats: ['A', 'T'] },
+        { text: "我對消防救災、救助人命充滿使命感。", cats: ['P'] },
+        { text: "我喜歡分析市場商情，協助公司制定行銷計畫。", cats: ['M'] },
+        { text: "我具備優秀的外語能力，希望能與外籍人士溝通服務。", cats: ['S', 'M'] },
+        { text: "我願意承擔高壓力的金融操作與授信調查工作。", cats: ['F'] },
+        { text: "我具備美感，能設計出吸引人的網頁版面或行銷物。", cats: ['Art'] },
+        { text: "我能獨立作業，完成複雜的土地登記或稅務處理。", cats: ['L'] },
+        { text: "我喜歡處理物料管理、採購及資產活化等業務。", cats: ['A'] },
+        { text: "我願意學習防制洗錢與數位金融相關法規。", cats: ['F'] },
+        { text: "我對客家或原住民文化的傳承與推廣有熱忱。", cats: ['Art', 'S'] },
+        { text: "我希望能具備操作重型機械或開大卡車的專業。", cats: ['T'] },
+        { text: "我對教育行政、學區規劃與教育法規有基礎興趣。", cats: ['A'] },
+        { text: "我喜歡研究專利權與智慧財產權的保護。", cats: ['P'] },
+        { text: "我具備領導才能，未來希望能擔任管理職務。", cats: ['A', 'M'] },
+        { text: "我不排斥在封閉的環境中（如監所）執行公務。", cats: ['P'] },
+        { text: "我希望能穩定領薪，並享有政府或國營事業的獎金報酬。", cats: ['A', 'F'] },
+        { text: "我喜歡透過實地勘查與測量來解決土地紛爭。", cats: ['L', 'T'] },
+        { text: "我對於衛生防疫、健保爭議等公共政策有興趣。", cats: ['S'] },
+        { text: "我希望能從事與郵政、儲蓄或壽險相關的工作。", cats: ['A', 'F'] },
+        { text: "我覺得為公眾服務所獲得的成就感高於追求個人利潤。", cats: ['S', 'P'] }
+    ];
+
+    const scores = { T:0, A:0, M:0, P:0, Art:0, S:0, F:0, L:0 };
+    
+    const catNames = {
+        'T': '技術與工程類 (台電/中油/機械/電機)',
+        'A': '一般行政與管理類 (行政/內勤/管理)',
+        'M': '行銷與商務服務類 (國貿/領隊/業務)',
+        'P': '司法與法律專業類 (法警/警察/法律行政)',
+        'Art': '文化藝術與傳播類 (文化行政/廣告行銷)',
+        'S': '社會福利與基層民生類 (社工師/民政/移民)',
+        'F': '金融與財經專業類 (銀行員/財會/審計)',
+        'L': '專業證照類 (地政士/記帳士/不動產經紀人)'
+    };
+
+    const jobData = {
+        'T': "您具備優秀的邏輯與實作能力，適合報考【國營聯招-技術類】或【台電、中油雇員】，工作內容穩定且具備專業技術職稱。",
+        'A': "您細心且重視秩序，是行政體系不可或缺的人才。推薦報考【高普考-一般行政】或【郵局內勤】，享受穩定的公務生活。",
+        'M': "您具備高度的溝通魅力與市場敏感度，【國營事業-企管/國貿】或【導遊領隊】證照考試將是您大展身手的好舞台。",
+        'P': "您具備強烈正義感與邏輯性，適合【司法特考】或【行政警察】。守護社會秩序的工作將為您帶來極大的成就感。",
+        'Art': "您充滿創意與文化底蘊，【高普考-文化行政】或國營事業的【大眾傳播】類科，能讓您在工作中實現藝術推廣的理想。",
+        'S': "您熱衷於服務人群，【公職社工師】或【移民行政】能讓您發揮溫暖的特質，成為民眾最可靠的後盾。",
+        'F': "您對數字敏感且專注力高，【公股銀行】櫃台與授信人員，或是【高普考-財稅行政】都是極佳的職涯選擇。",
+        'L': "您偏好具備專業認證的工作，考取【記帳士】或【不動產經紀人】證照，能讓您擁有獨立執業或進入知名事務所的門票。"
+    };
+
+    let currentIdx = 0;
+
+    function updateQuestion() {
+        if (currentIdx < questions.length) {
+            document.getElementById('progress-text').innerText = `問題 ${currentIdx + 1} / ${questions.length}`;
+            document.getElementById('question-text').innerText = questions[currentIdx].text;
+            document.getElementById('progress-fill').style.width = `${((currentIdx) / questions.length) * 100}%`;
+        } else {
+            showResults();
+        }
+    }
+
+    function handleAnswer(value) {
+        const q = questions[currentIdx];
+        q.cats.forEach(c => scores[c] += value);
+        currentIdx++;
+        updateQuestion();
+    }
+
+    function showResults() {
+        document.getElementById('quiz-section').style.display = 'none';
+        document.getElementById('result-section').style.display = 'block';
+
+        const sortedCats = Object.keys(scores).sort((a, b) => scores[b] - scores[a]);
+        const top3 = sortedCats.slice(0, 3);
+
+        const resDiv = document.getElementById('recommendations');
+        resDiv.innerHTML = "";
+
+        top3.forEach((cat, index) => {
+            resDiv.innerHTML += `
+                <div class="result-card">
+                    <span class="rank-badge">推薦指數 NO.${index + 1}</span>
+                    <h3>${catNames[cat]}</h3>
+                    <p>${jobData[cat]}</p>
+                </div>
+            `;
+        });
+    }
+
+    function showForm() {
+        document.getElementById('result-section').style.display = 'none';
+        document.getElementById('form-section').style.display = 'block';
+    }
+
+    document.getElementById('leadForm').onsubmit = function(e) {
+        e.preventDefault(); 
+
+        const name = document.getElementById('name').value;
+        const phone = document.getElementById('phone').value;
+        const email = document.getElementById('email').value;
+
+        const scriptURL = "https://script.google.com/macros/s/AKfycbxJlWrZsHQGQ3BZOeevOnQ0l_bu6rGf6owcZXbWOSev1mp05NeCXhfz5UV2aoOcp03b7w/exec";
+
+        const submitBtn = document.querySelector('#leadForm button[type="submit"]');
+        submitBtn.innerText = "資料傳送中... ⏳";
+        submitBtn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('phone', phone);
+        formData.append('email', email);
+
+        fetch(scriptURL, { 
+            method: 'POST', 
+            body: formData,
+            mode: 'no-cors' 
+        })
+        .then(response => {
+            document.getElementById('form-title').innerText = "✅ 送出成功！";
+            document.getElementById('form-subtitle').style.display = 'none';
+            document.getElementById('leadForm').style.display = 'none';
+            document.getElementById('form-footer').style.display = 'none';
+            document.getElementById('success-message').style.display = 'block';
+        })
+        .catch(error => {
+            console.error('錯誤發生!', error);
+            alert('傳送失敗，請檢查網路連線或稍後再試。');
+            submitBtn.innerText = "立即領取 ✅";
+            submitBtn.disabled = false;
+        });
+    };
+
+    updateQuestion();
+</script>
+
+</body>
+</html>
